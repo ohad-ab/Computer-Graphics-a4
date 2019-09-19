@@ -11,8 +11,8 @@ Shape::Shape(const Shape& shape,unsigned int mode)
 	isCopy = true;
 	this->mode = mode;
 	toRender = true;
-	texID = -1;
-	shaderID = 1;
+	materialID = shape.materialID;
+	shaderID = shape.shaderID;
 
 }
 
@@ -21,7 +21,7 @@ Shape::Shape(const std::string& fileName, unsigned int mode){
 	isCopy = false;
 	this->mode = mode;
 	toRender = true;
-	texID = -1;
+	materialID = 0;
 	shaderID = 1;
 
 }
@@ -33,16 +33,13 @@ Shape::Shape(const int SimpleShapeType,unsigned int mode)
 	this->mode = mode;
 	isCopy = false;
 	toRender = true;
-	texID = -1;
 	shaderID = 1;
-
+	materialID = 0;
 }
 
 
-void Shape::Draw( const std::vector<Shader*> shaders, const std::vector<Texture*> textures,bool isPicking)
+void Shape::Draw( const std::vector<Shader*> shaders,bool isPicking)
 {
-	if(texID>=0)
-		textures[texID]->Bind(0);
 	if(isPicking)
 		shaders[0]->Bind();
 	else

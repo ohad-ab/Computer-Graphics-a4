@@ -23,17 +23,17 @@ Game::Game(float angle ,float relationWH, float near, float far) : Scene(angle,r
 
 void Game::Init()
 {		
-
+	unsigned int texIDs[1] = { 0 };
 	AddShader("../res/shaders/pickingShader");	
 	AddShader("../res/shaders/basicShader");
 	
 	AddTexture("../res/textures/box0.bmp",false);
-
+	AddMaterial(texIDs, 1);
 	AddShape(Plane,-1,TRIANGLES);
 	
 	pickedShape = 0;
 	
-	SetShapeTex(0,0);
+	SetShapeMaterial(0,0);
 	MoveCamera(0,zTranslate,10);
 	pickedShape = -1;
 	
@@ -46,6 +46,7 @@ void Game::Update(const glm::mat4 &MVP,const glm::mat4 &Model,const int  shaderI
 	int r = ((pickedShape+1) & 0x000000FF) >>  0;
 	int g = ((pickedShape+1) & 0x0000FF00) >>  8;
 	int b = ((pickedShape+1) & 0x00FF0000) >> 16;
+	textures[materials[shapes[pickedShape]->GetMaterial()]->GetTexture(0)]->Bind(0);
 	s->Bind();
 	s->SetUniformMat4f("MVP", MVP);
 	s->SetUniformMat4f("Normal",Model);

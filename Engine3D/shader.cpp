@@ -15,6 +15,8 @@ static void printMat(glm::mat4 phi)
 		}
 }
 
+
+//reads vertex shader from .vs file and fragment shader from .fs file 
 Shader::Shader(const std::string& fileName)
 {
 	
@@ -24,7 +26,7 @@ Shader::Shader(const std::string& fileName)
 
 	for(unsigned int i = 0; i < NUM_SHADERS; i++)
 		glAttachShader(m_program, m_shaders[i]);
-	
+	//attributes definition 
 	glBindAttribLocation(m_program, POSITION_VB, "position");
 	glBindAttribLocation(m_program, TEXCOORD_VB, "texCoords");
 	glBindAttribLocation(m_program, NORMAL_VB, "normal");
@@ -45,7 +47,7 @@ Shader::~Shader()
 
 	glDeleteProgram(m_program);
 }
-
+//Bind shader
 void Shader::Bind() const {
 	glUseProgram(m_program);
 }
@@ -114,6 +116,7 @@ void Shader::SetUniform1f(const std::string& name, float value) {
 
 void Shader::SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3) {
 	glUniform4f(GetUniformLocation(name),v0,v1,v2,v3);
+	
 }
 
 void Shader::SetUniformMat4f(const std::string& name, const glm::mat4&  matrix) {
@@ -124,10 +127,16 @@ void Shader::SetUniformMat4fv(const std::string& name,const glm::mat4 *matrices,
 {
 	glUniformMatrix4fv(GetUniformLocation(name), length, GL_FALSE, &matrices[0][0][0]);
 }
-void Shader::SetUniform4fv(const std::string& name, float value[20])
+void Shader::SetUniform4fv(const std::string& name, const glm::vec4* arr, const int length)
 {
-	glUniform4fv(GetUniformLocation(name), 1, &value[0]);
+	glUniform4fv(GetUniformLocation(name),length, &arr[0][0]);
 }
+
+void Shader::SetUniform1iv(const std::string& name, const int* arr, const int length)
+{
+	glUniform1iv(GetUniformLocation(name), length, &arr[0]);
+}
+
 
 int Shader::GetUniformLocation(const std::string& name) {
 	if (m_UniformLocationCache.find(name)!= m_UniformLocationCache.end())

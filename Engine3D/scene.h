@@ -3,7 +3,10 @@
 #include "shape.h"
 #include "camera.h"
 #include "VertexArray.hpp"
+#include "Material.h"
 #include <vector>
+
+
 
 
 class Scene : public MovableGLM
@@ -26,7 +29,7 @@ public:
 	void AddShader(const std::string& fileName);
 	void AddTexture(const std::string& textureFileName, bool for2D);
 	void AddTexture(int width,int height, unsigned char *data);
-
+	void AddMaterial(unsigned int texIndices[],unsigned int size);
 	void AddCamera(glm::vec3& pos , float fov, float relationWH, float zNear, float zFar);
 
 	void ZeroShapesTrans();
@@ -60,7 +63,7 @@ public:
 	void MouseProccessing(int button);
 	bool inline IsActive() const { return isActive;} 
 	
-	inline void SetShapeTex(int shpIndx,int texIndx){shapes[shpIndx]->SetTexture(texIndx);} 
+	inline void SetShapeMaterial(int shpIndx,int materialIndx){shapes[shpIndx]->SetMaterial(materialIndx);} 
 	inline void SetShapeShader(int shpIndx,int shdrIndx){shapes[shpIndx]->SetShader(shdrIndx);} 
 	
 private:	
@@ -77,6 +80,7 @@ protected:
 	std::vector<Shader*> shaders;
 	std::vector<int> chainParents;
 	std::vector<Texture*> textures;
+	std::vector<Material*> materials;
 	
 	int pickedShape;
 	

@@ -8,7 +8,7 @@ class Texture
 public:
 	Texture(const std::string& fileName);
 	Texture(int width, int height,unsigned char *data);
-	void Bind(int slot);
+	void Bind(unsigned int slot);
 	inline int GetSlot(){return m_texture;}
 	 ~Texture();
 protected:

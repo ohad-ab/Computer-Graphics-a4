@@ -72,6 +72,11 @@
 		textures.push_back(new Texture(width,height,data));
 	}
 
+	void Scene::AddMaterial(unsigned int texIndices[], unsigned int size)
+	{
+		materials.push_back(new Material(texIndices, size));
+	}
+
 	void Scene::AddCamera(glm::vec3& pos , float fov,float relationWH , float zNear, float zFar)
 	{
 		cameras.push_back(new Camera(fov,relationWH,zNear,zFar));
@@ -93,21 +98,21 @@
 				Clear(0,0,0,0);
 		}
 
-		for (unsigned int i=0; i<shapes.size();i++)
+		for (pickedShape=0; pickedShape <shapes.size(); pickedShape++)
 		{
-			if(shapes[i]->Is2Render())
+			if(shapes[pickedShape]->Is2Render())
 			{
-				glm::mat4 Model = Normal * shapes[i]->MakeTrans();
+				glm::mat4 Model = Normal * shapes[pickedShape]->MakeTrans();
 				
 				if(shaderIndx > 0)
 				{
-					Update(MVP,Model,shapes[i]->GetShader());
-					shapes[i]->Draw(shaders,textures,false);	
+					Update(MVP,Model,shapes[pickedShape]->GetShader());
+					shapes[pickedShape]->Draw(shaders,false);
 				}
 				else 
 				{ //picking
 					Update(MVP,Model,0);
-					shapes[i]->Draw(shaders,textures,true);
+					shapes[pickedShape]->Draw(shaders,true);
 				}
 			}
 		}
