@@ -13,67 +13,58 @@ class Scene : public MovableGLM
 {
 
 public:
-	enum axis{xAxis,yAxis,zAxis};
-	enum transformations{xTranslate, yTranslate, zTranslate, xRotate, yRotate, zRotate, xScale, yScale, zScale, xCameraTranslate, yCameraTranslate, zCameraTranslate};
-	enum modes{POINTS, LINES, LINE_LOOP, LINE_STRIP, TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN, QUADS};
-	enum buffers{COLOR, DEPTH, STENCIL, BACK, FRONT, ACCUM, NONE };
-	enum shapes{Axis, Plane, Cube, Octahedron, Tethrahedron, LineCopy, MeshCopy};
-	
-	Scene();
-	Scene(float angle,float relationWH,float near, float far);
-	
-	void AddShapeFromFile(const std::string& fileName,int parent,unsigned int mode);
-	virtual void AddShape(int type,int parent,unsigned int mode);
-	void AddShapeCopy(int indx,int parent,unsigned int mode);
-	
-	void AddShader(const std::string& fileName);
-	void AddTexture(const std::string& textureFileName, bool for2D);
-	void AddTexture(int width,int height, unsigned char *data);
-	void AddMaterial(unsigned int texIndices[],unsigned int size);
-	void AddCamera(glm::vec3& pos , float fov, float relationWH, float zNear, float zFar);
+	enum axis { xAxis, yAxis, zAxis };
+	enum transformations { xTranslate, yTranslate, zTranslate, xRotate, yRotate, zRotate, xScale, yScale, zScale, xCameraTranslate, yCameraTranslate, zCameraTranslate };
+	enum modes { POINTS, LINES, LINE_LOOP, LINE_STRIP, TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN, QUADS };
+	enum shapes { Axis, Plane, Cube, Octahedron, Tethrahedron, LineCopy, MeshCopy };
+	enum buffers { COLOR, DEPTH, STENCIL, BACK, FRONT, NONE };
 
+	Scene();
+	//Scene(float angle, float relationWH, float near, float far);
+
+	void AddShapeFromFile(const std::string& fileName, int parent, unsigned int mode);
+	virtual void AddShape(int type, int parent, unsigned int mode);
+	void AddShapeCopy(int indx, int parent, unsigned int mode);
+
+	void AddShader(const std::string& fileName);
+	int AddTexture(const std::string& textureFileName, int dim );
+	int AddTexture(int width, int height, unsigned char* data, int buffer);
+	void AddMaterial(unsigned int texIndices[],unsigned int slots[], unsigned int size);
 	void ZeroShapesTrans();
 
-	virtual void Update(const glm::mat4 &MVP,const glm::mat4 &Normal,const int  shaderIndx) = 0;
-	virtual void WhenTranslate(){};
-	virtual void WhenRotate(){};
-	virtual void Motion(){};
-	virtual void Draw(int shaderIndx,int cameraIndx,int buffer,bool toClear,bool debugMode);
+	virtual void Update(const glm::mat4& MVP, const glm::mat4& Normal, const int  shaderIndx) = 0;
+	virtual void WhenTranslate() {};
+	virtual void WhenRotate() {};
+	virtual void WhenPick() {};
+	virtual void Motion() {};
+	virtual void Reset() {};
+	virtual void Draw(int shaderIndx,const glm::mat4 &MVP, bool debugmode = false);
 	virtual ~Scene(void);
 
-	void MoveCamera(int cameraIndx,int type,float amt);
-	void ShapeTransformation(int type,float amt);
+	void ShapeTransformation(int type, float amt);
 
-	float Picking(int x,int y);
-	void Resize(int width,int hight);
+	bool Picking(unsigned char data[4]);
 
-	inline void SetParent(int indx,int newValue) {chainParents[indx]=newValue;}
-	inline float GetNear(int cameraIndx){return cameras[cameraIndx]->GetNear();}
-	inline float GetFar(int cameraIndx){return cameras[cameraIndx]->GetFar();}
-
-	void ReadPixel();
+	inline void SetParent(int indx, int newValue) { chainParents[indx] = newValue; }
 	
-	inline float GetAngle(int cameraIndx) {return cameras[cameraIndx]->GetAngle();}
-	inline void Activate() {isActive = true; }
-	inline void Deactivate() {isActive = false;}
+	void ReadPixel();
+
+	inline void Activate() { isActive = true; }
+	inline void Deactivate() { isActive = false; }
 	void HideShape(int shpIndx);
 	void UnhideShape(int shpIndx);
+	void BindTexture(int texIndx, int slot);
+	
+	void MouseProccessing(int button, int xrel,int yrel);
+	bool inline IsActive() const { return isActive; }
 
-	void UpdatePosition(float xpos, float ypos);
-	void MouseProccessing(int button);
-	bool inline IsActive() const { return isActive;} 
-	
-	inline void SetShapeMaterial(int shpIndx,int materialIndx){shapes[shpIndx]->SetMaterial(materialIndx);} 
-	inline void SetShapeShader(int shpIndx,int shdrIndx){shapes[shpIndx]->SetShader(shdrIndx);} 
-	
-private:	
-	
-	std::vector<Camera*> cameras; 
+	inline void SetShapeMaterial(int shpIndx, int materialIndx) { shapes[shpIndx]->SetMaterial(materialIndx); }
+	inline void SetShapeShader(int shpIndx, int shdrIndx) { shapes[shpIndx]->SetShader(shdrIndx); }
+
+private:
+
 
 	float depth;
-	int xold, yold,xrel, yrel;
-	int cameraIndx;
-	void Clear(float r, float g, float b, float a);
 
 protected:
 	std::vector<Shape*> shapes;
@@ -81,9 +72,9 @@ protected:
 	std::vector<int> chainParents;
 	std::vector<Texture*> textures;
 	std::vector<Material*> materials;
-	
+
 	int pickedShape;
-	
+
 	bool isActive;
 };
 

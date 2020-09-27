@@ -1,15 +1,18 @@
 #pragma once
-#include "texture.h"
+#include <vector>
+#include <texture.h>
 
 class Material
 {
 	//Should use smart pointers for two materials with the same texture.
 	unsigned int numOfTexs;
-	unsigned int texIDs[];
-
+	std::vector<unsigned int> texIDs;
+	std::vector<unsigned int> slotIDs;
 public:
-	Material(unsigned int textureIDs[],unsigned int size);
-	unsigned int GetTexture(unsigned int indx);
+	Material(unsigned int textureIDs[],unsigned int slots[],unsigned int size);
+	 unsigned int GetTexture(unsigned int indx);
+	 unsigned int GetSlot(unsigned int indx);
+	 void Bind(const std::vector<Texture*> textures);
 
 
 	~Material();

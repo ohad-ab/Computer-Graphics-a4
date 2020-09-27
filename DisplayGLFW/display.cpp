@@ -45,12 +45,17 @@ void Display::AddResizeCallBack(void (*windowsizefun)(GLFWwindow*,int,int))
 	glfwSetWindowSizeCallback(m_window,windowsizefun);
 }
 
-void Display::SetScene(void *userPointer)
-{
-	
-	glfwSetWindowUserPointer(m_window,userPointer);
-}
+//void Display::SetScene(void *userPointer)
+//{
+//	
+//	glfwSetWindowUserPointer(m_window,userPointer);
+//}
 
+void Display::SetRenderer(void* userPointer)
+{
+
+	glfwSetWindowUserPointer(m_window, userPointer);
+}
 void* Display::GetScene()
 {
 	return glfwGetWindowUserPointer(m_window);

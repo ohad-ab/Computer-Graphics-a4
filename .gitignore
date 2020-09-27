@@ -1,6 +1,7 @@
 # Directories
-.idea/
-build/
-cmake-build-debug
-
+build
+IK
+Mbrot
+Raytracing
+RubiksCube
 # Files

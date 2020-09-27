@@ -8,7 +8,7 @@ class Shape : public MovableGLM
 {
 private:
 
-	MeshConstructor *mesh;
+	MeshConstructor* mesh;
 	unsigned int materialID;
 	int shaderID;
 	bool isCopy;
@@ -17,30 +17,30 @@ private:
 
 public:
 
-	Shape(const Shape& shape,unsigned int mode);
+	Shape(const Shape& shape, unsigned int mode);
 
-	Shape(const std::string& fileName,unsigned int mode);
-	
-	Shape(const int SimpleShapeType,unsigned int mode);
+	Shape(const std::string& fileName, unsigned int mode);
 
-	void Draw( const std::vector<Shader*> shaders,bool isPicking);
+	Shape(const int SimpleShapeType, unsigned int mode);
 
-	inline void Hide() {toRender = false;}
+	void Draw(const Shader* shaders, bool isPicking);
 
-	inline void Unhide() {toRender = true;}
+	inline void Hide() { toRender = false; }
 
-	inline bool Is2Render() {return toRender;}
+	inline void Unhide() { toRender = true; }
 
-	inline bool Is2D(){return mesh->Is2D();}
+	inline bool Is2Render() { return toRender; }
 
-	inline void SetShader(const int id){ shaderID = id;}
+	inline bool Is2D() { return mesh->Is2D(); }
 
-	inline int GetShader(){return shaderID;}
+	inline void SetShader(const int id) { shaderID = id; }
+
+	inline int GetShader() { return shaderID; }
 
 	inline void SetMaterial(const unsigned int id) { materialID = id; }
 
 	inline unsigned int GetMaterial() { return materialID; }
-	
+
 	virtual ~Shape(void);
 };
 

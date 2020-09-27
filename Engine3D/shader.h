@@ -21,7 +21,6 @@ public:
 	void SetUniformMat4f(const std::string& name,const glm::mat4&  matrix);
 	void SetUniformMat4fv(const std::string& name,const glm::mat4 *matrix,const int length);
 	void SetUniform4fv(const std::string& name, const glm::vec4* arr, const int length);
-	void SetUniform1iv(const std::string& name, const int* arr, const int length);
 
 	 ~Shader();
 protected:

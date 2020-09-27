@@ -13,7 +13,9 @@ public:
 	void SwapBuffers();
 	void PollEvents();
 	
-	void SetScene(void *userPointer);
+//	void SetScene(void *userPointer);
+	void SetRenderer(void* userPointer);
+
 	void* GetScene();
 	void AddKeyCallBack(void(*func)(GLFWwindow *,int,int,int,int));
 	void AddMouseCallBacks(void (* mousebuttonfun)(GLFWwindow*,int,int,int),void(* scrollfun)(GLFWwindow*,double,double),void (* cursorposfun)(GLFWwindow*,double,double));

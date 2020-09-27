@@ -1,12 +1,13 @@
 #include "Material.h"
 
 
-Material::Material(unsigned int textureIDs[], unsigned int size)
+Material::Material(unsigned int textureIDs[], unsigned int slots[], unsigned int size)
 {
 	numOfTexs = size;
 	for (int i = 0; i < size; i++)
 	{
-		texIDs[i] = textureIDs[i];
+		texIDs.push_back(textureIDs[i]);
+		slotIDs.push_back(slots[i]);
 	}
 }
 
@@ -16,6 +17,20 @@ unsigned int Material::GetTexture(unsigned int indx)
 		return texIDs[indx];
 	return 0;
 }
+ unsigned int Material::GetSlot(unsigned int indx)
+{
+	if (indx < numOfTexs)
+		return slotIDs[indx];
+	return 0;
+}
+
+ void Material::Bind(const std::vector<Texture*> textures)
+ {
+	 for (int i = 0; i < numOfTexs; i++)
+	 {
+		 textures[texIDs[i]]->Bind(slotIDs[i]);
+	 }
+ }
 
 
 Material::~Material()
