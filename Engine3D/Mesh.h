@@ -60,15 +60,6 @@ struct LineVertex
 		glm::vec3 color;
 	};
 
-class BoundingBox
-{
-	glm::vec3 center;     // center coordinates
-	glm::vec3 size;       // distance between the center of the box to its side in each dimension 
-	glm::vec3 xInit;      // x axis of the box. default value (1,0,0)		  
-	glm::vec3 yInit;      // y axis of the box. default value (0,1,0)		 
-	glm::vec3 zInit;	  // z axis of the box. default value (0,0,1)
-	//TODO: Add constructor and checkCollision function
-};
 
 
 IndexedModel PlaneTriangles();

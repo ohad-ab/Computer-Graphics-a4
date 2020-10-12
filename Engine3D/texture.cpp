@@ -63,6 +63,31 @@ Texture::Texture(int width,int height,unsigned char *data)
 	
 }
 
+Texture::Texture(int width, int height)
+{
+	glGenTextures(1, &m_texture);
+	if (height > 0)
+	{
+		texDimention = 2;
+		Bind(m_texture);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+	else
+	{
+		texDimention = 1;
+		Bind(m_texture);
+		glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		
+	}
+}
+
 Texture::~Texture()
 {
 	glDeleteTextures(1, &m_texture);

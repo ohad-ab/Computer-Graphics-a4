@@ -1,5 +1,8 @@
 #include "renderer.h"
 #include <GL/glew.h>
+#include <array>
+#include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
 
 Renderer::Renderer()
 {
@@ -12,17 +15,43 @@ Renderer::Renderer()
 	texShader = new Shader("../res/shaders/basicShaderTex");
 }
 
+
 Renderer::Renderer(float angle, float relationWH, float near, float far)
 {
 	glLineWidth(5);
 	cameras.push_back(new Camera(angle, relationWH, near, far));
-	
+
 	xold = 0;
 	yold = 0;
-	
+
 	debugMode = false;
 	plane = new Shape(Scene::Plane, Scene::TRIANGLES);
 	texShader = new Shader("../res/shaders/basicShaderTex");
+}
+
+Renderer::Renderer(const std::string& shaderName)
+{
+	cameras.push_back(new Camera(60.0f, 1.0, 0.1f, 100.0f));
+
+	xold = 0;
+	yold = 0;
+	debugMode = false;
+	plane = new Shape(Scene::Plane, Scene::TRIANGLES);
+	texShader = new Shader(shaderName);
+
+}
+
+Renderer::Renderer(float angle, float relationWH, float near, float far, const std::string& shaderName)
+{
+	glLineWidth(5);
+	cameras.push_back(new Camera(angle, relationWH, near, far));
+
+	xold = 0;
+	yold = 0;
+
+	debugMode = false;
+	plane = new Shape(Scene::Plane, Scene::TRIANGLES);
+	texShader = new Shader(shaderName);
 }
 
 void Renderer::Init(Scene* scene, std::list<int>xViewport, std::list<int>yViewport)
@@ -31,12 +60,13 @@ void Renderer::Init(Scene* scene, std::list<int>xViewport, std::list<int>yViewpo
 	MoveCamera(0, zTranslate, 10);
 	glm::ivec4 viewport;
 	glGetIntegerv(GL_VIEWPORT, &viewport[0]);
-	drawInfo.push_back(new DrawInfo(0, 0, 0, BACK,depthTest | inAction | toClear));
-	
+	drawInfo.push_back(new DrawInfo(0, 0, 0, 0, depthTest | stencilTest | inAction | toClear | blackClear));
+	buffers.push_back(new DrawBuffer());
+
 	if (xViewport.empty() && yViewport.empty())
 	{
 		viewports.push_back(viewport);
-		drawInfo.push_back(new DrawInfo(0, 0, 1, BACK, depthTest | toClear));
+		drawInfo.push_back(new DrawInfo(0, 0, 1, 0, depthTest | stencilTest | toClear));
 	}
 	else
 	{
@@ -52,7 +82,7 @@ void Renderer::Init(Scene* scene, std::list<int>xViewport, std::list<int>yViewpo
 			for (++yit; yit != yViewport.end(); ++yit)
 			{
 				viewports.push_back(glm::ivec4(*std::prev(xit), *std::prev(yit), *xit - *std::prev(xit), *yit - *std::prev(yit)));
-				drawInfo.push_back(new DrawInfo(indx, 0, 1, BACK,indx<1));
+				drawInfo.push_back(new DrawInfo(indx, 0, 1, 0, indx < 1 | depthTest));
 				indx++;
 			}
 		}
@@ -60,50 +90,54 @@ void Renderer::Init(Scene* scene, std::list<int>xViewport, std::list<int>yViewpo
 
 }
 
-void Renderer::Draw( int infoIndx )
+void Renderer::Draw(int infoIndx)
 {
 	DrawInfo info = *drawInfo[infoIndx];
-	if(buffers.size()>0)
-		buffers.back()->SetDrawDestination(0, info.buffer);
+
+
+	buffers[info.buffer]->Bind();
 	glViewport(viewports[info.viewportIndx].x, viewports[info.viewportIndx].y, viewports[info.viewportIndx].z, viewports[info.viewportIndx].w);
 	if (info.flags & scissorTest)
 		glEnable(GL_SCISSOR_TEST);
 	else
 		glDisable(GL_SCISSOR_TEST);
-	
+
 	if (info.flags & stencilTest)
 		glEnable(GL_STENCIL_TEST);
 	else
 		glDisable(GL_STENCIL_TEST);
-	
+
 	if (info.flags & depthTest)
 		glEnable(GL_DEPTH_TEST);
-	else 
+	else
 		glDisable(GL_DEPTH_TEST);
-	
+
 	if (info.flags & blend)
 		glEnable(GL_BLEND);
 	else
 		glDisable(GL_BLEND);
-	
+
 	glm::mat4 MVP = cameras[info.cameraIndx]->GetViewProjection() * glm::inverse(cameras[info.cameraIndx]->MakeTrans());
+
 	if (info.flags & toClear)
 	{
-		if (info.shaderIndx > 0)
-			Clear(1, 1, 1, 1);
-		else
+		if (info.flags & blackClear)
 			Clear(0, 0, 0, 0);
+		else
+			Clear(1, 1, 1, 1);
 	}
+
 	if (info.flags & is2D)
-	{
+	{//draw on plane
 		Update2D(MVP);
 		plane->Draw(texShader, true);
-		
+
 	}
 	else
 	{
 		scn->Draw(info.shaderIndx, MVP, debugMode);
 	}
+
 }
 
 void Renderer::DrawAll()
@@ -113,7 +147,6 @@ void Renderer::DrawAll()
 		if (!(drawInfo[i]->flags & inAction))
 			Draw( i);
 	}
-
 }
 
 bool Renderer::Picking(int x, int y)
@@ -126,7 +159,7 @@ bool Renderer::Picking(int x, int y)
 	glGetIntegerv(GL_VIEWPORT, viewport); //reading viewport parameters
 	glReadPixels(x, viewport[3] - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	glReadPixels(x, viewport[3] - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-	
+
 	return scn->Picking(data);
 	//return depth;
 
@@ -134,21 +167,23 @@ bool Renderer::Picking(int x, int y)
 
 void Renderer::MouseProccessing(int button)
 {
-		scn->MouseProccessing(button,xrel,yrel);
+	scn->MouseProccessing(button, xrel, yrel);
 }
 
-void Renderer::Update2D(const glm::mat4 &MVP)
+void Renderer::Update2D(const glm::mat4& MVP)
 {
 	texShader->Bind();
 	texShader->SetUniformMat4f("MVP", MVP);
 	texShader->SetUniformMat4f("Normal", glm::mat4(1));
-	scn->BindTexture(texIndx2D+1,0); //what texture to draw to the attachment
+	scn->BindMaterial(texShader, materialIndx2D); //what texture to draw to the attachment
+
+
 	//texShader->Unbind();
 }
 
-void Renderer::AddCamera(glm::vec3& pos, float fov, float relationWH, float zNear, float zFar,int infoIndx)
+void Renderer::AddCamera(glm::vec3& pos, float fov, float relationWH, float zNear, float zFar, int infoIndx)
 {
-	if(infoIndx>=0 && infoIndx < drawInfo.size())
+	if (infoIndx >= 0 && infoIndx < drawInfo.size())
 		drawInfo[infoIndx]->SetCamera(cameras.size());
 	cameras.push_back(new Camera(fov, relationWH, zNear, zFar));
 	cameras.back()->MyTranslate(pos, 0);
@@ -161,51 +196,68 @@ void Renderer::AddViewport(int left, int bottom, int width, int height)
 
 }
 
-void Renderer::AddBuffer( int infoIndx, bool stencil)
+unsigned int Renderer::AddBuffer(int infoIndx, bool stencil)
 {
-	CopyDraw(infoIndx);
-	
+	CopyDraw(infoIndx, buffers.size());
+
 	DrawInfo* info = drawInfo.back();
-	info->SetFlags(toClear);
+	info->SetFlags(stencilTest | toClear | blackClear);
+	//info->ClearFlags(depthTest);
 	int width = viewports[info->viewportIndx].z, height = viewports[info->viewportIndx].w;
-	buffers.push_back(new DrawBuffer(width, height, false));
+
+	unsigned int texId;
+
 	unsigned char* data = new unsigned char[width * height * 4];
 	for (size_t i = 0; i < width; i++)
 	{
 		for (size_t j = 0; j < height; j++)
 		{
 			data[(i * height + j) * 4] = (i + j) % 256;
-			data[(i * height + j) * 4 + 1] = (i + j*2) % 256;
-			data[(i * height + j) * 4 + 2] = (i*2 + j) % 256;
-			data[(i * height + j) * 4 + 3] = (i*3 + j) % 256;
+			data[(i * height + j) * 4 + 1] = (i + j * 2) % 256;
+			data[(i * height + j) * 4 + 2] = (i * 2 + j) % 256;
+			data[(i * height + j) * 4 + 3] = (i * 3 + j) % 256;
 		}
 	}
-	
-	texIndx2D =  scn->AddTexture(width, height, data, COLOR);
-	scn->AddTexture(width, height, 0, DEPTH);
+	//buffers.back()->Bind();
+	texId = scn->AddTexture(width, height, data, COLOR);
 	if (stencil)
 		scn->AddTexture(width, height, 0, STENCIL);
-	delete [] data;
-	buffers.back()->Bind();
-	//scn->BindTexture(1, 0);
+	else
+		scn->AddTexture(width, height, 0, DEPTH);
+	//scn->BindTexture(texId, info->buffer - 1);
+	buffers.push_back(new DrawBuffer(width, height, stencil, texId + 1));
 
-	BindTex2Buffer(texIndx2D, info->buffer);
-	BindTex2Buffer(texIndx2D, DEPTH);
-	if (stencil)
-		BindTex2Buffer(texIndx2D, STENCIL);
-	//buffers.back()->UnBind();
-	
+
+	delete[] data;
+
+	return texId;
 }
 
-void Renderer::AddDraw(int view, int camera, int shader, int buff, unsigned int flags )
+int Renderer::Create2Dmaterial(int texsNum)
 {
-	drawInfo.push_back(new DrawInfo(view,camera,shader,buff,flags));
+	std::vector<unsigned int> texIds;
+	std::vector<unsigned int> slots;
+	for (size_t i = 0; i < texsNum; i++)
+	{
+		unsigned int texId = AddBuffer(1, true);
+		texIds.push_back(texId);
+		slots.push_back(i
+		);
+	}
+
+	materialIndx2D = scn->AddMaterial((unsigned int*)& texIds[0], (unsigned int*)& slots[0], texsNum);
+	return materialIndx2D;
 }
 
-void Renderer::CopyDraw(int infoIndx, int buff )
+void Renderer::AddDraw(int view, int camera, int shader, int buff, unsigned int flags)
 {
-	DrawInfo *info = drawInfo[infoIndx];
-	drawInfo.push_back(new DrawInfo(info->viewportIndx, info->cameraIndx, info->shaderIndx, buff));
+	drawInfo.push_back(new DrawInfo(view, camera, shader, buff, flags));
+}
+
+void Renderer::CopyDraw(int infoIndx, int buff)
+{
+	DrawInfo* info = drawInfo[infoIndx];
+	drawInfo.push_back(new DrawInfo(info->viewportIndx, info->cameraIndx, info->shaderIndx, buff, info->flags));
 }
 
 void Renderer::SetViewport(int left, int bottom, int width, int height, int indx)
@@ -224,7 +276,7 @@ void Renderer::UpdatePosition(float xpos, float ypos)
 
 void Renderer::Resize(int width, int height)
 {
-
+	//not working properly
 	cameras[0]->SetProjection(cameras[0]->GetAngle(), (float)width / height);
 	glViewport(0, 0, width, height);
 	//std::cout << cameras[0]->GetRelationWH() << std::endl;
@@ -275,17 +327,18 @@ Renderer::~Renderer()
 void Renderer::Clear(float r, float g, float b, float a)
 {
 	glClearColor(r, g, b, a);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
 void Renderer::ActionDraw()
 {
-	for (int i = 0; i < drawInfo.size() ; i++)
+	for (int i = 0; i < drawInfo.size(); i++)
 	{
-		if(drawInfo[i]->flags & inAction)
+		if (drawInfo[i]->flags & inAction)
 			Draw(i);
 	}
-	
+
 }
 
 
@@ -294,24 +347,21 @@ void Renderer::SetScene(Scene* scene)
 	scn = scene;
 }
 
-void Renderer::BindTex2Buffer(int num, int buffer, int attachmentNum)
+
+int Renderer::MotionBlur(int texsNum, int texIndx)
 {
-	
-	switch (buffer)
+	std::vector<unsigned int> texIds;
+	std::vector<unsigned int> slots;
+	for (size_t i = 0; i < texsNum; i++)
 	{
-	case COLOR:
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentNum,  num+1, 0);
-	//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + num - 1, GL_TEXTURE_2D, 0 , 0);
-		break;
-	case DEPTH:
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, num+2, 0);
-		break;
-	case STENCIL:
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,  num+3, 0);
-		break;
-	default:
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentNum,   num+1, 0);
+		unsigned int texId = AddBuffer(1, true);
+		texIds.push_back(texId);
+		slots.push_back(i
+		);
 	}
 
-
+	materialIndx2D = scn->AddMaterial((unsigned int*)& texIds[0], (unsigned int*)& slots[0], texsNum);
+	return materialIndx2D;
 }
+
+

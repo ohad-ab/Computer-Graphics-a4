@@ -7,8 +7,6 @@
 #include <vector>
 
 
-
-
 class Scene : public MovableGLM
 {
 
@@ -26,19 +24,19 @@ public:
 	virtual void AddShape(int type, int parent, unsigned int mode);
 	void AddShapeCopy(int indx, int parent, unsigned int mode);
 
-	void AddShader(const std::string& fileName);
-	int AddTexture(const std::string& textureFileName, int dim );
-	int AddTexture(int width, int height, unsigned char* data, int buffer);
-	void AddMaterial(unsigned int texIndices[],unsigned int slots[], unsigned int size);
+	int AddShader(const std::string& fileName);
+	int AddTexture(const std::string& textureFileName, int dim);
+	int AddTexture(int width, int height, unsigned char* data, int mode);
+	int AddMaterial(unsigned int texIndices[], unsigned int slots[], unsigned int size);
 	void ZeroShapesTrans();
 
 	virtual void Update(const glm::mat4& MVP, const glm::mat4& Normal, const int  shaderIndx) = 0;
 	virtual void WhenTranslate() {};
 	virtual void WhenRotate() {};
-	virtual void WhenPick() {};
+	virtual void WhenPicked() {};
 	virtual void Motion() {};
 	virtual void Reset() {};
-	virtual void Draw(int shaderIndx,const glm::mat4 &MVP, bool debugmode = false);
+	virtual void Draw(int shaderIndx, const glm::mat4& MVP, bool debugmode = false);
 	virtual ~Scene(void);
 
 	void ShapeTransformation(int type, float amt);
@@ -46,16 +44,17 @@ public:
 	bool Picking(unsigned char data[4]);
 
 	inline void SetParent(int indx, int newValue) { chainParents[indx] = newValue; }
-	
+
 	void ReadPixel();
 
 	inline void Activate() { isActive = true; }
 	inline void Deactivate() { isActive = false; }
 	void HideShape(int shpIndx);
 	void UnhideShape(int shpIndx);
-	void BindTexture(int texIndx, int slot);
-	
-	void MouseProccessing(int button, int xrel,int yrel);
+	void BindMaterial(Shader* s, unsigned int materialIndx);
+	void BindTexture(int texIndx, int slot) { textures[texIndx]->Bind(slot); }
+
+	void MouseProccessing(int button, int xrel, int yrel);
 	bool inline IsActive() const { return isActive; }
 
 	inline void SetShapeMaterial(int shpIndx, int materialIndx) { shapes[shpIndx]->SetMaterial(materialIndx); }

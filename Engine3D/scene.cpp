@@ -20,7 +20,7 @@ Scene::Scene()
 
 	pickedShape = -1;
 	depth = 0;
-	
+
 	isActive = false;
 }
 
@@ -42,22 +42,23 @@ void Scene::AddShapeCopy(int indx, int parent, unsigned int mode)
 	shapes.push_back(new Shape(*shapes[indx], mode));
 }
 
-void Scene::AddShader(const std::string& fileName)
+int Scene::AddShader(const std::string& fileName)
 {
 	shaders.push_back(new Shader(fileName));
+	return (shaders.size() - 1);
 }
 
 int  Scene::AddTexture(const std::string& textureFileName, int dim)
 {
-	textures.push_back(new Texture(textureFileName,dim));
+	textures.push_back(new Texture(textureFileName, dim));
 	return(textures.size() - 1);
 }
 
-int Scene::AddTexture(int width, int height, unsigned char* data, int buffer)
+int Scene::AddTexture(int width, int height, unsigned char* data, int mode)
 {
-	textures.push_back(new Texture(width, height, data));
+	textures.push_back(new Texture(width, height));
 
-	switch (buffer)
+	switch (mode)
 	{
 	case COLOR:
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); //note GL_RED internal format, to save memory.
@@ -66,26 +67,28 @@ int Scene::AddTexture(int width, int height, unsigned char* data, int buffer)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, data);
 		break;
 	case STENCIL:
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_STENCIL_INDEX16, width, height, 0, GL_STENCIL_COMPONENTS, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, data);
 		break;
 	default:
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); //note GL_RED internal format, to save memory.
 	}
+	glBindTexture(GL_TEXTURE_2D, 0);
 	return(textures.size() - 1);
 }
 
-void Scene::AddMaterial(unsigned int texIndices[], unsigned int slots[], unsigned int size)
+int Scene::AddMaterial(unsigned int texIndices[], unsigned int slots[], unsigned int size)
 {
-	materials.push_back(new Material(texIndices,slots, size));
+	materials.push_back(new Material(texIndices, slots, size));
+	return (materials.size() - 1);
 }
 
 void Scene::Draw(int shaderIndx, const glm::mat4& MVP, bool debugmode)
 {
 
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 	glm::mat4 Normal = MakeTrans();
 
-	
+
 	int p = pickedShape;
 
 	for (pickedShape = 0; pickedShape < shapes.size(); pickedShape++)
@@ -144,45 +147,30 @@ void Scene::ShapeTransformation(int type, float amt)
 
 bool Scene::Picking(unsigned char data[4])
 {
-	int pickedID = data[0] + data[1] * 256 + data[2] * 256 * 256 - 1;
-	if (data[0] == 0 && data[1] == 0 && data[2] == 0)
-	{
 		pickedShape = -1;
-		//std::cout<<"not picked"<<std::endl;
 		return false;
-	}
-	else
-	{
-		pickedShape = pickedID;
-		std::cout << "picked " << pickedID << std::endl;
-		//xold = x;
-		//yold = y;
-		WhenPick();
-		return true;
-	}
-	//return depth;
-
+		//WhenPicked();	
 }
 //return coordinates in global system for a tip of arm position is local system 
-void Scene::MouseProccessing(int button,int xrel, int yrel)
+void Scene::MouseProccessing(int button, int xrel, int yrel)
 {
 	//if (pickedShape == -1)
 	//{
-		if (button == 1)
-		{
+	if (button == 1)
+	{
 
-			MyTranslate(glm::vec3(-xrel / 80.0f, 0, 0), 0);
-			MyTranslate(glm::vec3(0, yrel / 80.0f, 0), 0);
-			WhenTranslate();
-		}
-		else
-		{
-			MyRotate(-xrel / 2.0f, glm::vec3(0, 1, 0), 0);
-			MyRotate(-yrel / 2.0f, glm::vec3(1, 0, 0), 1);
-			WhenRotate();
-		}
+		MyTranslate(glm::vec3(-xrel / 80.0f, 0, 0), 0);
+		MyTranslate(glm::vec3(0, yrel / 80.0f, 0), 0);
+		WhenTranslate();
+	}
+	else
+	{
+		MyRotate(-xrel / 2.0f, glm::vec3(0, 1, 0), 0);
+		MyRotate(-yrel / 2.0f, glm::vec3(1, 0, 0), 1);
+		WhenRotate();
+	}
 	//}
-	
+
 }
 
 void Scene::ZeroShapesTrans()
@@ -209,9 +197,14 @@ void Scene::UnhideShape(int shpIndx)
 	shapes[shpIndx]->Unhide();
 }
 
-void Scene::BindTexture(int texIndx, int slot)
+void Scene::BindMaterial(Shader* s, unsigned int materialIndx)
 {
-	textures[texIndx]->Bind(slot);
+
+	for (size_t i = 0; i < materials[materialIndx]->GetNumOfTexs(); i++)
+	{
+		materials[materialIndx]->Bind(textures, i);
+		s->SetUniform1i("sampler" + std::to_string(i + 1), materials[materialIndx]->GetSlot(i));
+	}
 }
 
 Scene::~Scene(void)
@@ -229,7 +222,7 @@ Scene::~Scene(void)
 	{
 		delete tex;
 	}
-	for(Material* mat : materials)
+	for (Material* mat : materials)
 	{
 		delete mat;
 	}

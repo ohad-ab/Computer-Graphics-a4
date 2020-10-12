@@ -56,19 +56,14 @@ void Game::Update(const glm::mat4 &MVP,const glm::mat4 &Model,const int  shaderI
 	int g = ((pickedShape+1) & 0x0000FF00) >>  8;
 	int b = ((pickedShape+1) & 0x00FF0000) >> 16;
 	if (shapes[pickedShape]->GetMaterial() >= 0 && !materials.empty())
-	
-	materials[shapes[pickedShape]->GetMaterial()]->Bind(textures);
+		BindMaterial(s, shapes[pickedShape]->GetMaterial());
 	//textures[0]->Bind(0);
 	s->Bind();
 	s->SetUniformMat4f("MVP", MVP);
 	s->SetUniformMat4f("Normal",Model);
 	s->SetUniform1i("sampler1", materials[shapes[pickedShape]->GetMaterial()]->GetSlot(0));
 	s->SetUniform1i("sampler2", materials[shapes[pickedShape]->GetMaterial()]->GetSlot(1));
-	//s->SetUniform4f("lightDirection", 0.0f , 0.0f, -1.0f, 0.0f);
-//	if(shaderIndx == 0)
-//		s->SetUniform4f("lightColor",r/255.0f, g/255.0f, b/255.0f,1.0f);
-//	else 
-//		s->SetUniform4f("lightColor",0.7f,0.8f,0.1f,1.0f);
+
 	s->Unbind();
 }
 

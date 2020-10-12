@@ -1,14 +1,17 @@
 #pragma once
+
 class DrawBuffer
 {
 
-	unsigned int buffer;
+	unsigned int frameBuffer;
+	unsigned int renderBuffer;
 	unsigned int depthBuffer;
-	unsigned int stencilBuffer;
+	unsigned int depthStencilBuffer;
+	bool isStencil;
 
-	void CreateDepthBufferAttachment(int width, int height);
-	void CreateColorBufferAttachment(int width, int height);
-	void CreateStencilBufferAttachment(int width, int height);
+	void CreateDepthBufferAttachment(int width, int height, unsigned int texId);
+	void CreateColorBufferAttachment(int width, int height, unsigned int texId);
+	void CreateStencilBufferAttachment(int width, int height, unsigned int texId);
 public:
 	enum
 	{
@@ -19,9 +22,9 @@ public:
 		FRONT,
 		NONE,
 	};
-	DrawBuffer(int width, int height , bool stencil);
-	void SetDrawDestination(int num, int mode);
-	void resize(int width, int height);
+	DrawBuffer();
+	DrawBuffer(int width, int height, bool stencil, unsigned int texId);
+	void resize(int width, int height, unsigned int texId);
 	void Bind();
 	void UnBind();
 	~DrawBuffer(void);

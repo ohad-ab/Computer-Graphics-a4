@@ -9,10 +9,12 @@ class Material
 	std::vector<unsigned int> texIDs;
 	std::vector<unsigned int> slotIDs;
 public:
-	Material(unsigned int textureIDs[],unsigned int slots[],unsigned int size);
-	 unsigned int GetTexture(unsigned int indx);
-	 unsigned int GetSlot(unsigned int indx);
-	 void Bind(const std::vector<Texture*> textures);
+	Material(unsigned int textureIDs[], unsigned int slots[], unsigned int size);
+	unsigned int GetTexture(unsigned int indx);
+	unsigned int GetSlot(unsigned int indx);
+	inline unsigned int GetNumOfTexs() { return numOfTexs; }
+	void Bind(const std::vector<Texture*> textures, int indx);
+	void rotateTexs();
 
 
 	~Material();

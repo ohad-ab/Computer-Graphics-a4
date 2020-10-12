@@ -8,6 +8,7 @@ class Texture
 public:
 	Texture(const std::string& fileName,const int dim);
 	Texture(int width, int height,unsigned char *data);
+	Texture(int width, int height);
 	void Bind(int slot);
 
 	inline int GetSlot(){return m_texture;}

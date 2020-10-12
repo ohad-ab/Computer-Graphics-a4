@@ -17,25 +17,35 @@ unsigned int Material::GetTexture(unsigned int indx)
 		return texIDs[indx];
 	return 0;
 }
- unsigned int Material::GetSlot(unsigned int indx)
+unsigned int Material::GetSlot(unsigned int indx)
 {
 	if (indx < numOfTexs)
 		return slotIDs[indx];
 	return 0;
 }
 
- void Material::Bind(const std::vector<Texture*> textures)
- {
-	 for (int i = 0; i < numOfTexs; i++)
-	 {
-		 textures[texIDs[i]]->Bind(slotIDs[i]);
-	 }
- }
+void Material::Bind(const std::vector<Texture*> textures, int indx)
+{
+	//for (int i = 0; i < numOfTexs; i++)
+   // {
+	textures[texIDs[indx]]->Bind(slotIDs[indx]);
+	// }
+}
+
+void Material::rotateTexs()
+{
+	unsigned int tmp = texIDs[0], i = 1;
+	for (; i < numOfTexs; i++)
+	{
+		texIDs[i - 1] = texIDs[i];
+	}
+	texIDs[i - 1] = tmp;
+}
 
 
 Material::~Material()
 {
-	
+
 }
 
 
