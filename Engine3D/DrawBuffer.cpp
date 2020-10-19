@@ -1,6 +1,6 @@
 #pragma once
 #include "DrawBuffer.h"
-#include <GL/glew.h>
+#include "GL/glew.h"
 #include <iostream>
 
 DrawBuffer::DrawBuffer()
