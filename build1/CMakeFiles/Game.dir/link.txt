@@ -1,1 +1,0 @@
-/usr/bin/g++ CMakeFiles/Game.dir/Game/game.cpp.o CMakeFiles/Game.dir/Game/main.cpp.o -o Game  libEngine.a libDisplay.a ../res/libs/glew32s.lib ../res/libs/glfw3.lib -lopengl32.lib 
