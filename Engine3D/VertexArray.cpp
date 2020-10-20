@@ -6,7 +6,7 @@
  *      Author: Casa
  */
 #define GLEW_STATIC
-#include <GL\glew.h>
+#include "GL/glew.h"
 #include "VertexArray.hpp"
 
 VertexArray::VertexArray() {
