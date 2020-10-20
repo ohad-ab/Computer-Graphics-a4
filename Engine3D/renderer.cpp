@@ -54,7 +54,7 @@ Renderer::Renderer(float angle, float relationWH, float near, float far, const s
 	texShader = new Shader(shaderName);
 }
 
-void Renderer::Init(Scene* scene, std::list<int>xViewport, std::list<int>yViewport)
+void Renderer::Init(Scene* scene,  std::list<int>xViewport,  std::list<int>yViewport)
 {
 	scn = scene;
 	MoveCamera(0, zTranslate, 10);
@@ -181,7 +181,7 @@ void Renderer::Update2D(const glm::mat4& MVP)
 	//texShader->Unbind();
 }
 
-void Renderer::AddCamera(glm::vec3& pos, float fov, float relationWH, float zNear, float zFar, int infoIndx)
+void Renderer::AddCamera(const glm::vec3& pos, float fov, float relationWH, float zNear, float zFar, int infoIndx)
 {
 	if (infoIndx >= 0 && infoIndx < drawInfo.size())
 		drawInfo[infoIndx]->SetCamera(cameras.size());
@@ -348,20 +348,5 @@ void Renderer::SetScene(Scene* scene)
 }
 
 
-int Renderer::MotionBlur(int texsNum, int texIndx)
-{
-	std::vector<unsigned int> texIds;
-	std::vector<unsigned int> slots;
-	for (size_t i = 0; i < texsNum; i++)
-	{
-		unsigned int texId = AddBuffer(1, true);
-		texIds.push_back(texId);
-		slots.push_back(i
-		);
-	}
-
-	materialIndx2D = scn->AddMaterial((unsigned int*)& texIds[0], (unsigned int*)& slots[0], texsNum);
-	return materialIndx2D;
-}
 
 

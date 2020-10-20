@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <list>
 #include "camera.h"
 #include "scene.h"
 #include "DrawBuffer.h"
@@ -44,17 +45,16 @@ public:
 	Renderer(float angle, float relationWH, float near, float far);
 	Renderer(const std::string& shaderName);
 	Renderer(float angle, float relationWH, float near, float far, const std::string& shaderName);
-	void Init(Scene* scene, std::list<int>xViewport, std::list<int>yViewport);
+	void Init(Scene* scene,  std::list<int>xViewport,  std::list<int>yViewport);
 	void SetScene(Scene* userPointer);
 	inline Scene* GetScene() const { return scn; };
 	void Draw(int infoIndx = 1);
 	void DrawAll();
-	int Renderer::MotionBlur(int texsNum, int texIndx);
 
 
 	void Resize(int width, int height);
 	void UpdatePosition(float xpos, float ypos);
-	void AddCamera(glm::vec3& pos, float fov, float relationWH, float zNear, float zFar, int infoIndx = -1);
+	void AddCamera(const glm::vec3& pos, float fov, float relationWH, float zNear, float zFar, int infoIndx = -1);
 	void AddViewport(int left, int bottom, int width, int height);
 	unsigned int AddBuffer(int infoIndx, bool stencil = false);
 	int Create2Dmaterial(int texsNum);

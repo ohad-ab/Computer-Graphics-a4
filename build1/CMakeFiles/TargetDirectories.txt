@@ -1,0 +1,5 @@
+/home/user1/examples/EngineForCGcourse/build1/CMakeFiles/rebuild_cache.dir
+/home/user1/examples/EngineForCGcourse/build1/CMakeFiles/Display.dir
+/home/user1/examples/EngineForCGcourse/build1/CMakeFiles/Engine.dir
+/home/user1/examples/EngineForCGcourse/build1/CMakeFiles/Game.dir
+/home/user1/examples/EngineForCGcourse/build1/CMakeFiles/edit_cache.dir
