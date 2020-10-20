@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "glm\glm.hpp"
+#include "glm/glm.hpp"
 #include "VertexArray.hpp"
 #include "Mesh.h"
 

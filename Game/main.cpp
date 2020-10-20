@@ -1,5 +1,5 @@
 #include "InputManager.h"
-#include "glm\glm.hpp"
+#include "glm/glm.hpp"
 
 int main(int argc,char *argv[])
 {

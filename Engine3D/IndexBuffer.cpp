@@ -5,7 +5,7 @@
  *      Author: Casa
  */
 #define GLEW_STATIC
-#include "GL\glew.h"
+#include "GL/glew.h"
 #include "IndexBuffer.hpp"
 
 IndexBuffer::IndexBuffer(const unsigned int* data, unsigned int count)
