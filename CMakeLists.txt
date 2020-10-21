@@ -20,7 +20,7 @@ add_library(Display ${DISPLAY})
 add_library(Engine ${ENGINE})
 
 add_executable(${PROJ_NAME1} ${GAME})
-target_link_libraries(${PROJ_NAME1} Engine Display ${PROJECT_SOURCE_DIR}/res/libs/glew32s.lib ${PROJECT_SOURCE_DIR}/res/libs/glfw3.lib)
+target_link_libraries(${PROJ_NAME1} Engine Display ${PROJECT_SOURCE_DIR}/res/libs/glew32s.lib ${PROJECT_SOURCE_DIR}/res/libs/glfw3.lib opengl32.lib)
 
 #target_link_libraries(${PROJ_NAME1} Engine Display GL GLEW glfw)
 
