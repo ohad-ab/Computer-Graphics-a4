@@ -43,8 +43,6 @@ public:
 
 	Renderer();
 	Renderer(float angle, float relationWH, float near, float far);
-	Renderer(const std::string& shaderName);
-	Renderer(float angle, float relationWH, float near, float far, const std::string& shaderName);
 	void Init(Scene* scene,  std::list<int>xViewport,  std::list<int>yViewport);
 	void SetScene(Scene* userPointer);
 	inline Scene* GetScene() const { return scn; };
@@ -65,7 +63,6 @@ public:
 	void MoveCamera(int cameraIndx, int type, float amt);
 	bool Picking(int x, int y);
 	void MouseProccessing(int button);
-	void Update2D(const glm::mat4& MVP);
 	inline float GetNear(int cameraIndx) { return cameras[cameraIndx]->GetNear(); }
 	inline float GetFar(int cameraIndx) { return cameras[cameraIndx]->GetFar(); }
 	inline float GetAngle(int cameraIndx) { return cameras[cameraIndx]->GetAngle(); }
@@ -81,8 +78,6 @@ private:
 	std::vector<glm::ivec4> viewports;
 	std::vector<DrawInfo*> drawInfo;
 	std::vector<DrawBuffer*> buffers;
-	Shape* plane;
-	Shader* texShader;
 	int materialIndx2D;
 	int toDrawIndx;
 	bool debugMode;
