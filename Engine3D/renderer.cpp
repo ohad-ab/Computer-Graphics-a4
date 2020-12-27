@@ -29,13 +29,13 @@ void Renderer::Init(Scene* scene,  std::list<int>xViewport,  std::list<int>yView
 	MoveCamera(0, zTranslate, 10);
 	glm::ivec4 viewport;
 	glGetIntegerv(GL_VIEWPORT, &viewport[0]);
-	drawInfo.push_back(new DrawInfo(0, 0, 0, 0,   inAction | toClear | blackClear));
+	drawInfo.push_back(new DrawInfo(0, 0, 0, 0,   inAction | toClear | blackClear | depthTest));
 	buffers.push_back(new DrawBuffer());
 
 	if (xViewport.empty() && yViewport.empty())
 	{
 		viewports.push_back(viewport);
-		drawInfo.push_back(new DrawInfo(0, 0, 1, 0,  toClear | blackClear));
+		drawInfo.push_back(new DrawInfo(0, 0, 1, 0,  toClear | depthTest ));
 	}
 	else
 	{
@@ -118,7 +118,7 @@ bool Renderer::Picking(int x, int y)
 	glGetIntegerv(GL_VIEWPORT, viewport); //reading viewport parameters
 	glReadPixels(x, viewport[3] - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	glReadPixels(x, viewport[3] - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-
+	
 	return scn->Picking(data);
 	//return depth;
 
@@ -210,7 +210,9 @@ void Renderer::Resize(int width, int height)
 {
 	//not working properly
 	cameras[0]->SetProjection(cameras[0]->GetAngle(), (float)width / height);
-	glViewport(0, 0, width, height);
+	//glViewport(0, 0, width, height);
+	viewports[0].z = width;
+	viewports[0].w = height;
 	//std::cout << cameras[0]->GetRelationWH() << std::endl;
 }
 
