@@ -27,7 +27,17 @@ glm::mat4 MovableGLM::MakeTrans(const glm::mat4 &prevTransformations) const
 
 glm::mat4 MovableGLM::MakeTrans() const
 {
+	return    rot * trans* scl;
+}
+
+glm::mat4 MovableGLM::MakeTransNoScale() const
+{
 	return    rot * trans;
+}
+
+glm::mat4 MovableGLM::MakeTransNoRot() const
+{
+	return    trans * scl ;
 }
 
 void MovableGLM::MyTranslate(const glm::vec3 delta,int mode)
@@ -48,9 +58,22 @@ void  MovableGLM::MyScale(const glm::vec3 scale)
 	scl = glm::scale(scl,scale);
 }
 
+void MovableGLM::setCenterOfRotation(glm::vec3 delta)
+{
+	transIn = glm::translate(transIn, -delta);
+	transOut = glm::translate(transOut, delta);
+}
+
+glm::vec3 MovableGLM::getCenterOfRotation()
+{
+	return glm::vec3(transIn*glm::vec4(0, 0, 0, 1));
+}
+
 void MovableGLM::ZeroTrans()
 {
 	trans = glm::mat4(1);
+	transIn = glm::mat4(1);
+	transOut = glm::mat4(1);
 	rot = glm::mat4(1);
 	scl = glm::mat4(1);
 }

@@ -19,8 +19,10 @@ Scene::Scene()
 	glLineWidth(5);
 
 	pickedShape = -1;
+	picked = -1;
 	depth = 0;
-
+	cameraAngle = 0;
+	cameraAnglex = 0;
 	isActive = true;
 }
 
@@ -82,7 +84,7 @@ int Scene::AddMaterial(unsigned int texIndices[], unsigned int slots[], unsigned
 	return (materials.size() - 1);
 }
 
-void Scene::Draw(int shaderIndx, const glm::mat4& MVP, int viewportIndx, unsigned int flags) 
+void Scene::Draw(int shaderIndx, const glm::mat4& proj, glm::mat4& view, Camera* camera, int viewportIndx, unsigned int flags)
 {
 	glm::mat4 Normal = MakeTrans();
 
@@ -92,21 +94,39 @@ void Scene::Draw(int shaderIndx, const glm::mat4& MVP, int viewportIndx, unsigne
 	{
 		if (shapes[pickedShape]->Is2Render(viewportIndx))
 		{
-			glm::mat4 Model = Normal * shapes[pickedShape]->MakeTrans();
+			glm::mat4 Model = Normal * GetPreviousTrans(view)* shapes[pickedShape]->MakeTrans();
 
+			
 			if (shaderIndx > 0)
 			{
-				Update(MVP, Model, shapes[pickedShape]->GetShader());
+				Update(proj,view, Model, shapes[pickedShape]->GetShader());
 				shapes[pickedShape]->Draw(shaders[shapes[pickedShape]->GetShader()], false);
+				if(std::find(pickedShapes.begin(), pickedShapes.end(), pickedShape) != pickedShapes.end()
+					&& viewportIndx == 0 && (flags & 1024))//if shape is picked and it's regular draw then scale a bit
+					shapes[pickedShape]->MyScale(glm::vec3(1.05, 1.05, 1.05));
+				else if(std::find(pickedShapes.begin(), pickedShapes.end(), pickedShape) != pickedShapes.end() //if shape is picked and it's second phase stencil then scale back to original size
+					&& viewportIndx == 0 && (flags & 2048))
+					shapes[pickedShape]->MyScale(glm::vec3(20.f/21, 20.f/21, 20.f/21));
 			}
 			else
 			{ //picking
-				Update(MVP, Model, 0);
+				Update(proj, view, Model, 0);
 				shapes[pickedShape]->Draw(shaders[0], true);
 			}
 		}
 	}
 	pickedShape = p;
+}
+
+glm::mat4 Scene::GetPreviousTrans(glm::mat4& view)
+{
+	glm::mat4 Model(1);
+	int p = chainParents[pickedShape];
+	for (; p >= 0; p = chainParents[p])
+		Model = shapes[p]->MakeTransNoScale()*Model;
+	if (p == -2)
+		Model = glm::inverse(view)*Model;
+	return Model;
 }
 
 void Scene::ShapeTransformation(int type, float amt)
@@ -142,42 +162,70 @@ void Scene::ShapeTransformation(int type, float amt)
 
 bool Scene::Picking(unsigned char data[4])
 {
-		pickedShape = -1;
-		if (data[0] > 0)
+		if (data[0] > 3)
 		{
-			pickedShape = data[0]-1; //r 
+			picked = data[0]-1; //r 
+			if(std::find(pickedShapes.begin(),pickedShapes.end(),picked) == pickedShapes.end())
+			{
+				pickedShapes.push_back(picked);
+			}
 			return true;
 		}
 		return false;
 		//WhenPicked();	
 }
+
+void Scene::framePicking(unsigned char data[4])
+{
+	std::vector<int>::iterator it;
+	int s = data[0] - 1;
+	if ((it = std::find(pickedShapes.begin(), pickedShapes.end(), s)) != pickedShapes.end())
+		pickedShapes.erase(it);
+}
+
+bool Scene::emptyPicking()
+{
+	if (pickedShapes.empty())
+		return true;
+	pickedShapes.clear();
+	return false;
+}
+
+bool Scene::isPicking()
+{
+	return !pickedShapes.empty();
+}
 //return coordinates in global system for a tip of arm position is local system 
 void Scene::MouseProccessing(int button, int xrel, int yrel)
 {
-	//if (pickedShape == -1)
-	//{
-	if (button == 1)
+	if (picked != -1)
 	{
-		pickedShape = 0;
-		ShapeTransformation(xTranslate, xrel / 80.0f);
-		pickedShape = -1;
-		//MyTranslate(glm::vec3(-xrel / 80.0f, 0, 0), 0);
-		//MyTranslate(glm::vec3(0, yrel / 80.0f, 0), 0);
-		WhenTranslate();
+		if (button == 1)
+		{
+			pickedShape = picked;
+			ShapeTransformation(xTranslate, -xrel / 350.0f);
+			ShapeTransformation(yTranslate, yrel / 350.0f);
+			pickedShape = -1;
+			//MyTranslate(glm::vec3(-xrel / 80.0f, 0, 0), 0);
+			//MyTranslate(glm::vec3(0, yrel / 80.0f, 0), 0);
+			//WhenTranslate();
+		}
+		else
+		{
+			pickedShape = 0;
+			ShapeTransformation(yRotate, xrel / 2.0f);
+			pickedShape = -1;
+			//MyRotate(-xrel / 2.0f, glm::vec3(0, 1, 0), 0);
+			//MyRotate(-yrel / 2.0f, glm::vec3(1, 0, 0), 1);
+			WhenRotate();
+		}
 	}
-	else
-	{
-		pickedShape = 0;
-		ShapeTransformation(yRotate, xrel / 2.0f);
-		pickedShape = -1;
-		//MyRotate(-xrel / 2.0f, glm::vec3(0, 1, 0), 0);
-		//MyRotate(-yrel / 2.0f, glm::vec3(1, 0, 0), 1);
-		WhenRotate();
-	}
-	//}
 
 }
-
+void Scene::releaseR()
+{
+	picked = -1;
+}
 void Scene::ZeroShapesTrans()
 {
 	for (unsigned int i = 0; i < shapes.size(); i++)

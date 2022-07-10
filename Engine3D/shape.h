@@ -6,7 +6,7 @@
 
 class Shape : public MovableGLM
 {
-private:
+protected:
 
 	MeshConstructor* mesh;
 	unsigned int materialID;
@@ -22,6 +22,8 @@ public:
 	Shape(const std::string& fileName, unsigned int mode);
 
 	Shape(const int SimpleShapeType, unsigned int mode);
+
+	Shape();
 
 	void Draw(const Shader* shaders, bool isPicking);
 

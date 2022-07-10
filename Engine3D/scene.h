@@ -16,6 +16,8 @@ public:
 	enum modes { POINTS, LINES, LINE_LOOP, LINE_STRIP, TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN, QUADS };
 	enum shapes { Axis, Plane, Cube, Octahedron, Tethrahedron, LineCopy, MeshCopy };
 	enum buffers { COLOR, DEPTH, STENCIL, BACK, FRONT, NONE };
+	float cameraAngle;
+	float cameraAnglex;
 
 	Scene();
 	//Scene(float angle, float relationWH, float near, float far);
@@ -30,19 +32,21 @@ public:
 	int AddMaterial(unsigned int texIndices[], unsigned int slots[], unsigned int size);
 	void ZeroShapesTrans();
 
-	virtual void Update(const glm::mat4& MVP, const glm::mat4& Normal, const int  shaderIndx) = 0;
+	virtual void Update(const glm::mat4& proj, glm::mat4& view, const glm::mat4& Normal, const int  shaderIndx) = 0;
 	virtual void WhenTranslate() {};
 	virtual void WhenRotate() {};
 	virtual void WhenPicked() {};
 	virtual void Motion() {};
 	virtual void Reset() {};
-	virtual void Draw(int shaderIndx, const glm::mat4& MVP, int viewportIndx, unsigned int flags);
+	virtual void Draw(int shaderIndx, const glm::mat4& MVP, glm::mat4& camTrans, Camera* camera, int viewportIndx, unsigned int flags);
 	virtual ~Scene(void);
 
 	void ShapeTransformation(int type, float amt);
 
 	bool Picking(unsigned char data[4]);
-
+	void framePicking(unsigned char data[4]);
+	bool emptyPicking();
+	bool isPicking();
 	inline void SetParent(int indx, int newValue) { chainParents[indx] = newValue; }
 
 	void ReadPixel();
@@ -55,8 +59,9 @@ public:
 	void BindTexture(int texIndx, int slot) { textures[texIndx]->Bind(slot); }
 
 	void MouseProccessing(int button, int xrel, int yrel);
+	void releaseR();
 	bool inline IsActive() const { return isActive; }
-
+	glm::mat4 GetPreviousTrans(glm::mat4& camTrans);
 	inline void SetShapeMaterial(int shpIndx, int materialIndx) { shapes[shpIndx]->SetMaterial(materialIndx); }
 	inline void SetShapeShader(int shpIndx, int shdrIndx) { shapes[shpIndx]->SetShader(shdrIndx); }
 
@@ -71,9 +76,9 @@ protected:
 	std::vector<int> chainParents;
 	std::vector<Texture*> textures;
 	std::vector<Material*> materials;
-
 	int pickedShape;
-
+	int picked;
+	std::vector<int> pickedShapes;
 	bool isActive;
 };
 

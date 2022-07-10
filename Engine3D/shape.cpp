@@ -37,6 +37,7 @@ Shape::Shape(const int SimpleShapeType, unsigned int mode)
 	materialID = 0;
 }
 
+Shape::Shape() {}
 
 void Shape::Draw(const Shader* shader, bool isPicking)
 {

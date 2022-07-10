@@ -39,8 +39,9 @@ class Renderer
 public:
 	enum buffersMode { COLOR, DEPTH, STENCIL, BACK, FRONT, NONE };
 	enum transformations { xTranslate, yTranslate, zTranslate, xRotate, yRotate, zRotate, xScale, yScale, zScale, xCameraTranslate, yCameraTranslate, zCameraTranslate };
-	enum drawFlags { toClear = 1, is2D = 2, inAction = 4, scissorTest = 8, depthTest = 16, stencilTest = 32, blend = 64, blackClear = 128, debugMode = 256};
-
+	enum drawFlags { toClear = 1, is2D = 2, inAction = 4, scissorTest = 8, depthTest = 16, stencilTest = 32, blend = 64, blackClear = 128, debugMode = 256, inAction2 = 512,
+	passStencil = 1024, scaleStencil = 2048, inAction3 = 4096};
+	int xrel, yrel;
 	Renderer();
 	Renderer(float angle, float relationWH, float near, float far);
 	void Init(Scene* scene,  std::list<int>xViewport,  std::list<int>yViewport);
@@ -52,6 +53,8 @@ public:
 
 	void Resize(int width, int height);
 	void UpdatePosition(float xpos, float ypos);
+	void Press(float xpos, float ypos);
+	void release();
 	void AddCamera(const glm::vec3& pos, float fov, float relationWH, float zNear, float zFar, int infoIndx = -1);
 	void AddViewport(int left, int bottom, int width, int height);
 	unsigned int AddBuffer(int infoIndx, bool stencil = false);
@@ -62,6 +65,7 @@ public:
 	inline void BindViewport2D(int indx) { drawInfo[indx]->SetFlags(is2D); }
 	void MoveCamera(int cameraIndx, int type, float amt);
 	bool Picking(int x, int y);
+	bool PickingRect(int x, int y);
 	void MouseProccessing(int button);
 	inline float GetNear(int cameraIndx) { return cameras[cameraIndx]->GetNear(); }
 	inline float GetFar(int cameraIndx) { return cameras[cameraIndx]->GetFar(); }
@@ -69,12 +73,15 @@ public:
 	inline void SetDrawFlag(int infoIndx,unsigned int flag) { drawInfo[infoIndx]->SetFlags(flag); }
 	inline void ClearDrawFlag(int infoIndx, unsigned int flag) { drawInfo[infoIndx]->ClearFlags(flag); }
 	bool checkViewport(int x, int y, int viewportIndx);
+	void ActionDraw2();
 	~Renderer();
 private:
 	std::vector<Camera*> cameras;
 	Scene* scn;
 	float depth;
-	int xold, yold, xrel, yrel;
+	int xold, yold, xwhenPress, yWhenPress;
+	bool pressed;
+	bool picked;
 	void Clear(float r, float g, float b, float a);
 	void ActionDraw();
 	std::vector<glm::ivec4> viewports;

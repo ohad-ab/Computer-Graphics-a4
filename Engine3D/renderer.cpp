@@ -10,7 +10,10 @@ Renderer::Renderer()
 
 	xold = 0;
 	yold = 0;
-	
+	xwhenPress = 0;
+	yWhenPress = 0;
+	pressed = false;
+	picked = false;
 }
 
 Renderer::Renderer(float angle, float relationWH, float near, float far)
@@ -20,6 +23,10 @@ Renderer::Renderer(float angle, float relationWH, float near, float far)
 
 	xold = 0;
 	yold = 0;
+	xwhenPress = 0;
+	yWhenPress = 0;
+	pressed = false;
+	picked = false;
 
 }
 
@@ -51,7 +58,7 @@ void Renderer::Init(Scene* scene,  std::list<int>xViewport,  std::list<int>yView
 			for (++yit; yit != yViewport.end(); ++yit)
 			{
 				viewports.push_back(glm::ivec4(*std::prev(xit), *std::prev(yit), *xit - *std::prev(xit), *yit - *std::prev(yit)));
-				drawInfo.push_back(new DrawInfo(indx, 0, 1, 0, indx < 1 | depthTest));
+				drawInfo.push_back(new DrawInfo(indx, 0, 1, 0, indx < 1 | depthTest | passStencil | stencilTest));
 				indx++;
 			}
 		}
@@ -67,12 +74,36 @@ void Renderer::Draw(int infoIndx)
 	buffers[info.buffer]->Bind();
 	glViewport(viewports[info.viewportIndx].x, viewports[info.viewportIndx].y, viewports[info.viewportIndx].z, viewports[info.viewportIndx].w);
 	if (info.flags & scissorTest)
+	{
+		printf("xwhenpress %d ywhenpres %d xold %d yold %d\n", xwhenPress, yWhenPress, xold, yold);
 		glEnable(GL_SCISSOR_TEST);
+		int x = glm::min(xwhenPress, xold);
+		int y = glm::min(viewports[info.viewportIndx].w - yWhenPress, viewports[info.viewportIndx].w - yold);
+		glScissor(x, y, glm::abs(xwhenPress - xold), glm::abs(yWhenPress - yold));
+	}
 	else
 		glDisable(GL_SCISSOR_TEST);
 
 	if (info.flags & stencilTest)
+	{
 		glEnable(GL_STENCIL_TEST);
+		if (info.flags & passStencil)
+		{
+			glStencilFunc(GL_ALWAYS, 1, 0xFF);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+		}
+		else
+			if (info.flags & scaleStencil)
+			{
+				glStencilFunc(GL_EQUAL, 1, 0xFF);
+				glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+			}
+			else
+			{
+				glStencilFunc(GL_EQUAL, 0, 0xFF);
+				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+			}
+	}
 	else
 		glDisable(GL_STENCIL_TEST);
 
@@ -82,11 +113,16 @@ void Renderer::Draw(int infoIndx)
 		glDisable(GL_DEPTH_TEST);
 
 	if (info.flags & blend)
+	{
 		glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+	}
 	else
 		glDisable(GL_BLEND);
 
-	glm::mat4 MVP = cameras[info.cameraIndx]->GetViewProjection() * glm::inverse(cameras[info.cameraIndx]->MakeTrans());
+	glm::mat4 proj = cameras[info.cameraIndx]->GetViewProjection();
+	glm::mat4 view = glm::inverse(cameras[info.cameraIndx]->MakeTrans());
+	glm::mat4 viewNoRot = glm::inverse(cameras[info.cameraIndx]->MakeTransNoRot());
 
 	if (info.flags & toClear)
 	{
@@ -95,7 +131,7 @@ void Renderer::Draw(int infoIndx)
 		else
 			Clear(1, 1, 1, 1);
 	}
-	scn->Draw(info.shaderIndx, MVP, info.viewportIndx, debugMode);
+	scn->Draw(info.shaderIndx, proj, view, cameras[info.cameraIndx],  info.viewportIndx, info.flags);
 
 }
 
@@ -103,7 +139,7 @@ void Renderer::DrawAll()
 {
 	for (int i =   0; i < drawInfo.size(); i++)
 	{
-		if (!(drawInfo[i]->flags & inAction))
+		if (!((drawInfo[i]->flags & inAction) || ((drawInfo[i]->flags & inAction2) && !pressed) || (drawInfo[i]->flags & inAction3) && !picked))
 			Draw( i);
 	}
 }
@@ -112,18 +148,53 @@ bool Renderer::Picking(int x, int y)
 {
 	//picking from camera 0 and using shader 0
 	ActionDraw();
-
 	GLint viewport[4];
 	unsigned char data[4];
 	glGetIntegerv(GL_VIEWPORT, viewport); //reading viewport parameters
 	glReadPixels(x, viewport[3] - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	glReadPixels(x, viewport[3] - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
 	
-	return scn->Picking(data);
-	//return depth;
+	if (scn->Picking(data))
+	{
+		picked = true;
+		return true;
+	}
+	return false;
 
 }
 
+bool Renderer::PickingRect(int x, int y)
+{
+	//picking from camera 0 and using shader 0
+	ActionDraw();
+	int width = glm::abs(xwhenPress - xold);
+	int height = glm::abs(yWhenPress - yold);
+	GLint viewport[4];
+	unsigned char *data2 = new unsigned char[4 * (width + 1)*(height + 1) + 4];
+	unsigned char *data3 = new unsigned char[4 * (width + 3)*(height + 3) + 4];
+	glGetIntegerv(GL_VIEWPORT, viewport); //reading viewport parameters
+	int x2 = glm::min(xwhenPress, xold);
+	int y2 = glm::min(viewport[3] - yWhenPress, viewport[3] - yold);
+	glReadPixels(x2, y2, glm::abs(xwhenPress - xold), glm::abs(yWhenPress - yold), GL_RGBA, GL_UNSIGNED_BYTE, data2);//read pixels in rectangle
+	for (int i = 0; i < width*height; i++)
+	{
+		if(scn->Picking(&data2[i * 4]))//find shapes in rectangle
+			picked = true;
+	}
+	//if a shape in rectangle is outside of its frame then remove it
+	glReadPixels(x2 - 1, y2 - 1, glm::abs(xwhenPress - xold) + 2, glm::abs(yWhenPress - yold) + 2, GL_RGBA, GL_UNSIGNED_BYTE, data3);
+	for (int i = 0; i <= (height+2); i++)
+	{
+		for (int j = 0; j <= (width + 2); j++)
+			if (i == 0 || i == (height) || j == 0 || j == width)//check on frame only
+				scn->framePicking(&data3[i * 4 * (width+2) + j * 4]);
+	}
+
+	delete data2;
+	delete data3;
+	return false;
+
+}
 void Renderer::MouseProccessing(int button)
 {
 	scn->MouseProccessing(button, xrel, yrel);
@@ -206,6 +277,21 @@ void Renderer::UpdatePosition(float xpos, float ypos)
 	yold = ypos;
 }
 
+void Renderer::Press(float xpos, float ypos)
+{
+	xwhenPress = xpos;
+	yWhenPress = ypos;
+	pressed = true;
+}
+
+void Renderer::release()
+{
+	if (!pressed)
+		scn->emptyPicking();
+	pressed = false;
+	picked = false;
+}
+
 void Renderer::Resize(int width, int height)
 {
 	//not working properly
@@ -275,6 +361,16 @@ void Renderer::ActionDraw()
 	for (int i = 0; i < drawInfo.size(); i++)
 	{
 		if (drawInfo[i]->flags & inAction)
+			Draw(i);
+	}
+
+}
+
+void Renderer::ActionDraw2()
+{
+	for (int i = 0; i < drawInfo.size(); i++)
+	{
+		if (drawInfo[i]->flags & inAction2)
 			Draw(i);
 	}
 
